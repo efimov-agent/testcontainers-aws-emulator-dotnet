@@ -7,6 +7,15 @@ Running the emulator in Docker by hand means: building the image yourself (AWS p
 `0.0.0.0`, turning telemetry off, then copying the per-run credentials and the self-signed certificate out of the
 container and wiring them into the SDK. This module does all of it.
 
+Community module; not affiliated with AWS or the Testcontainers project.
+
+```sh
+dotnet add package AwsEmulator.Testcontainers
+```
+
+The package ID is `AwsEmulator.Testcontainers` (the `Testcontainers.*` prefix on nuget.org is reserved for official
+modules); the namespace is `Testcontainers.AwsEmulator`, following the Testcontainers module convention.
+
 ```csharp
 var image = await AwsEmulatorImage.BuildAsync();   // official Dockerfile; daemon's x86_64 or aarch64
 

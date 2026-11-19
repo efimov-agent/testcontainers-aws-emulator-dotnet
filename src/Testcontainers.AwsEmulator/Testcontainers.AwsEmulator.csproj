@@ -6,7 +6,15 @@
     <Nullable>enable</Nullable>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <PackageId>Testcontainers.AwsEmulator</PackageId>
+    <PackageId>AwsEmulator.Testcontainers</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>efimov-agent</Authors>
+    <RepositoryUrl>https://github.com/efimov-agent/testcontainers-aws-emulator-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/efimov-agent/testcontainers-aws-emulator-dotnet</PackageProjectUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <Description>Testcontainers module for the official AWS Emulator (aws/aws-emulator): builds the image, starts the emulator with telemetry off, and hands you SigV4 credentials and a pinned-certificate HTTP client for the AWS SDK for .NET.</Description>
     <PackageTags>testcontainers;aws;emulator;aws-emulator;integration-testing;s3;sqs;dynamodb</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
