@@ -53,7 +53,7 @@ public sealed class AwsEmulatorContainer : DockerContainer
     }
 
     /// <summary>
-    /// Points an SDK client configuration at the emulator: endpoint, region, pinned TLS, no host prefix injection
+    /// Points an SDK client configuration at the emulator: endpoint, signing region, pinned TLS, no host prefix injection
     /// and, for Amazon S3, path-style addressing.
     /// </summary>
     public TConfig Configure<TConfig>(TConfig config)
@@ -77,17 +77,50 @@ public sealed class AwsEmulatorContainer : DockerContainer
     public TClient CreateClient<TClient>(ClientConfig config)
         where TClient : AmazonServiceClient
     {
+        ArgumentNullException.ThrowIfNull(config);
+
+        var constructor = typeof(TClient).GetConstructor([typeof(AWSCredentials), config.GetType()])
+            ?? throw new ArgumentException($"{typeof(TClient).Name} has no constructor taking {config.GetType().Name}.", nameof(config));
+
         Configure(config);
-        return (TClient)(Activator.CreateInstance(typeof(TClient), GetCredentials(), config)
-            ?? throw new InvalidOperationException($"Cannot create {typeof(TClient)}."));
+        try
+        {
+            return (TClient)constructor.Invoke([GetCredentials(), config]);
+        }
+        catch (System.Reflection.TargetInvocationException ex) when (ex.InnerException is not null)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(ex.InnerException);
+            throw;
+        }
+    }
+
+    /// <summary>The effective configuration (for tests).</summary>
+    internal AwsEmulatorConfiguration Configuration => _configuration;
+
+    /// <inheritdoc />
+    protected override async Task UnsafeStartAsync(CancellationToken ct = default)
+    {
+        // base runs the wait strategy; the HTTPS health check answers only once the emulator has written its
+        // credentials and certificate, so they are complete here (also after a restart, which regenerates them).
+        await base.UnsafeStartAsync(ct).ConfigureAwait(false);
+        await LoadStateAsync(ct).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    protected override async ValueTask DisposeAsyncCore()
+    {
+        _certificate?.Dispose();
+        _certificate = null;
+        await base.DisposeAsyncCore().ConfigureAwait(false);
     }
 
     /// <summary>Reads the credentials and certificate that the emulator wrote on startup.</summary>
-    internal async Task LoadStateAsync(CancellationToken ct)
+    private async Task LoadStateAsync(CancellationToken ct)
     {
-        // The startup callback runs before the wait strategy, so wait for the emulator to write its state files.
-        var pem = await ReadStateFileAsync("ca.pem", ct).ConfigureAwait(false);
+        var pem = await ReadFileAsync($"{AwsEmulatorBuilder.StateDirectory}/ca.pem", ct).ConfigureAwait(false);
+        var previous = _certificate;
         _certificate = X509Certificate2.CreateFromPem(Encoding.ASCII.GetString(pem));
+        previous?.Dispose();
 
         if (_configuration.Authentication == false)
         {
@@ -95,40 +128,8 @@ public sealed class AwsEmulatorContainer : DockerContainer
             return;
         }
 
-        var file = await ReadStateFileAsync("emulator_credentials", ct).ConfigureAwait(false);
+        var file = await ReadFileAsync($"{AwsEmulatorBuilder.StateDirectory}/emulator_credentials", ct).ConfigureAwait(false);
         _credentials = ParseCredentials(Encoding.UTF8.GetString(file));
-    }
-
-    private async Task<byte[]> ReadStateFileAsync(string name, CancellationToken ct)
-    {
-        var path = $"{AwsEmulatorBuilder.StateDirectory}/{name}";
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
-        timeout.CancelAfter(TimeSpan.FromMinutes(1));
-
-        while (true)
-        {
-            try
-            {
-                var content = await ReadFileAsync(path, timeout.Token).ConfigureAwait(false);
-                if (content.Length > 0)
-                {
-                    return content;
-                }
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException && !timeout.IsCancellationRequested)
-            {
-                // Not written yet.
-            }
-
-            try
-            {
-                await Task.Delay(TimeSpan.FromMilliseconds(200), timeout.Token).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-            {
-                throw new TimeoutException($"AWS Emulator did not write {path} within 1 minute.");
-            }
-        }
     }
 
     /// <summary>Parses the <c>[default]</c> profile of an AWS shared credentials file.</summary>

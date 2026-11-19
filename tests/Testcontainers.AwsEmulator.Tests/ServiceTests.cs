@@ -80,7 +80,7 @@ public sealed class ServiceTests(EmulatorFixture fixture)
     }
 
     [Fact]
-    public async Task UnpinnedClient_FailsTls_PinnedFactoryIsWhatMakesItWork()
+    public async Task ClientWithoutPinnedFactory_FailsTls()
     {
         var ct = TestContext.Current.CancellationToken;
         using var plain = new HttpClient();

@@ -8,8 +8,7 @@ Running the emulator in Docker by hand means: building the image yourself (AWS p
 container and wiring them into the SDK. This module does all of it.
 
 ```csharp
-var image = AwsEmulatorImage.Create();          // official Dockerfile, x86_64 or aarch64
-await image.CreateAsync();
+var image = await AwsEmulatorImage.BuildAsync();   // official Dockerfile; daemon's x86_64 or aarch64
 
 await using var emulator = new AwsEmulatorBuilder(image).Build();
 await emulator.StartAsync();
@@ -23,7 +22,7 @@ What you get from a started `AwsEmulatorContainer`:
 | Member | Purpose |
 |---|---|
 | `CreateClient<TClient>(config)` | Any `AmazonServiceClient`, pointed at the emulator with its credentials |
-| `Configure(config)` | Sets endpoint, region `us-east-1`, pinned TLS, no host-prefix injection, S3 path-style |
+| `Configure(config)` | Sets endpoint, signing region `us-east-1`, pinned TLS, no host-prefix injection, S3 path-style |
 | `GetCredentials()` | SigV4 keys the emulator generated for this run |
 | `GetCertificate()` / `CreateHttpClientFactory()` | The run's self-signed certificate; an SDK HTTP factory that trusts exactly it (pinned, works with remote Docker hosts) |
 | `GetEndpoint()` | `https://<docker-host>:<mapped-port>/` |
@@ -38,7 +37,10 @@ Builder options:
 ## Tests
 
 `dotnet test` runs the suite against a real emulator (Docker required): S3, SQS, DynamoDB, rejected wrong
-credentials, TLS pinning, telemetry off, auth off. The first run downloads the emulator package (~570 MB image).
+credentials, TLS pinning (including refusing another emulator's certificate), telemetry, auth off, builder
+flags. The first run downloads the emulator package (~570 MB image); later runs rebuild from the Docker layer
+cache in seconds, offline. The cached layer keeps the emulator version it first downloaded — remove the
+`testcontainers-aws-emulator` image to update.
 
 ## Notes
 
