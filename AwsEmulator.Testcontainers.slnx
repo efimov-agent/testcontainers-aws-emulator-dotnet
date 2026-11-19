@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Testcontainers.AwsEmulator/Testcontainers.AwsEmulator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Testcontainers.AwsEmulator.Tests/Testcontainers.AwsEmulator.Tests.csproj" />
+  </Folder>
+</Solution>

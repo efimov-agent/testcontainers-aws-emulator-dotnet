@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>Testcontainers.AwsEmulator</PackageId>
+    <Description>Testcontainers module for the official AWS Emulator (aws/aws-emulator): builds the image, starts the emulator with telemetry off, and hands you SigV4 credentials and a pinned-certificate HTTP client for the AWS SDK for .NET.</Description>
+    <PackageTags>testcontainers;aws;emulator;aws-emulator;integration-testing;s3;sqs;dynamodb</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AWSSDK.Core" Version="4.1.1.1" />
+    <PackageReference Include="Testcontainers" Version="4.17.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Testcontainers.AwsEmulator.Tests" />
+    <EmbeddedResource Include="Dockerfile" LogicalName="Testcontainers.AwsEmulator.Dockerfile" />
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>
