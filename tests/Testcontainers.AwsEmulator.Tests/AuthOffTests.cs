@@ -28,6 +28,15 @@ public sealed class SecondContainerTests(EmulatorFixture fixture)
         var foreign = new AmazonS3Config { ServiceURL = emulator.GetEndpoint(), ForcePathStyle = true, AuthenticationRegion = "us-east-1" };
         foreign.HttpClientFactory = fixture.Container.CreateHttpClientFactory();
         using var pinnedElsewhere = new AmazonS3Client(new BasicAWSCredentials("anything", "anything"), foreign);
-        await Assert.ThrowsAnyAsync<Exception>(() => pinnedElsewhere.ListBucketsAsync(ct));
+        var ex = await Assert.ThrowsAnyAsync<Exception>(() => pinnedElsewhere.ListBucketsAsync(ct));
+        Assert.Contains(Chain(ex), e => e is System.Security.Authentication.AuthenticationException);
+    }
+
+    private static IEnumerable<Exception> Chain(Exception? e)
+    {
+        for (; e is not null; e = e.InnerException)
+        {
+            yield return e;
+        }
     }
 }

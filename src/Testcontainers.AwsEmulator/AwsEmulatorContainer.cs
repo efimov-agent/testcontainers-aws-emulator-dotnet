@@ -28,6 +28,7 @@ public sealed class AwsEmulatorContainer : DockerContainer
     }
 
     /// <summary>The self-signed certificate this emulator run generated.</summary>
+    /// <remarks>Owned by the container: disposed when the container is disposed or started again.</remarks>
     public X509Certificate2 GetCertificate()
     {
         return _certificate ?? throw NotStarted();
@@ -101,7 +102,7 @@ public sealed class AwsEmulatorContainer : DockerContainer
     protected override async Task UnsafeStartAsync(CancellationToken ct = default)
     {
         // base runs the wait strategy; the HTTPS health check answers only once the emulator has written its
-        // credentials and certificate, so they are complete here (also after a restart, which regenerates them).
+        // credentials and certificate, so they are complete here. After a restart they are read again.
         await base.UnsafeStartAsync(ct).ConfigureAwait(false);
         await LoadStateAsync(ct).ConfigureAwait(false);
     }

@@ -17,6 +17,7 @@ public static class AwsEmulatorImage
     public static async Task<IImage> BuildAsync(string channel = "LTS/latest", CancellationToken ct = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(channel);
+        var tag = TagFor(channel);
 
         // A private, unique build context: no races between parallel test runs, nothing for other users to swap in.
         var context = Directory.CreateTempSubdirectory("testcontainers-aws-emulator-");
@@ -32,7 +33,7 @@ public static class AwsEmulatorImage
             var image = new ImageFromDockerfileBuilder()
                 .WithDockerfileDirectory(context.FullName)
                 .WithDockerfile("Dockerfile")
-                .WithName($"{DefaultName}:{TagFor(channel)}")
+                .WithName($"{DefaultName}:{tag}")
                 .WithBuildArgument("EMULATOR_CHANNEL", channel)
                 .WithDeleteIfExists(false)
                 .WithCleanUp(false)
@@ -51,6 +52,12 @@ public static class AwsEmulatorImage
     internal static string TagFor(string channel)
     {
         var chars = channel.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' ? c : '-').ToArray();
-        return new string(chars).Trim('-');
+        var tag = new string(chars).Trim('-', '.');
+        if (tag.Length == 0 || tag.Length > 128)
+        {
+            throw new ArgumentException($"Channel '{channel}' does not map to a valid Docker tag.", nameof(channel));
+        }
+
+        return tag;
     }
 }

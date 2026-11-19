@@ -4,7 +4,7 @@
 # `uname -m` resolves to the Docker daemon's architecture (x86_64 or aarch64), not the test host's.
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023-minimal
 ARG EMULATOR_CHANNEL=LTS/latest
-RUN curl -fsSL -o /tmp/aws-emulator.rpm \
+RUN curl --proto =https -fsSL -o /tmp/aws-emulator.rpm \
       "https://downloads.aws.com/aws-emulator/packages/aws-emulator/${EMULATOR_CHANNEL}/aws-emulator-$(uname -m).rpm" \
  && rpm -i /tmp/aws-emulator.rpm && rm /tmp/aws-emulator.rpm \
  && mkdir -p /home/emulator && chown 1000 /home/emulator

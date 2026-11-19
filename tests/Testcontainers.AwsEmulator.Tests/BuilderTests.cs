@@ -58,4 +58,12 @@ public sealed class BuilderTests
     {
         Assert.Equal(tag, AwsEmulatorImage.TagFor(channel));
     }
+
+    [Theory]
+    [InlineData("///")]
+    [InlineData("...")]
+    public void TagFor_RejectsChannelsWithoutTag(string channel)
+    {
+        Assert.Throws<ArgumentException>(() => AwsEmulatorImage.TagFor(channel));
+    }
 }
